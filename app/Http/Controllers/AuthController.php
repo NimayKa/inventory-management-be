@@ -11,21 +11,22 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'fullname' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|same:repassword',
+            'repassword' => 'required|string|min:8',
         ]);
 
         $user = User::create([
-            'fullname' => $request->fullname,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role ?? 'staff',
+            'fullname' => $validated['fullname'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'staff',
         ]);
-
+        echo ('test');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

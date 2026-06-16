@@ -2,47 +2,136 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Inventory;
+use App\Models\Log as InventoryLog;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+public function index(Request $request)
     {
-        //
+        $query = Inventory::query();
+
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('categories', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('description', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        $inventories = $query->get();
+
+        return response()->json($inventories, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'categories'  => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'quantity'    => 'required|integer|min:0',
+            'price'       => 'required|numeric|min:0',
+            'picture'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', 
+        ]);
+
+        $filenameString = 'default.jpg';
+
+        if ($request->hasFile('picture')) {
+            $file = $request->file('picture');
+            
+
+            $filenameString = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+
+            $file->storeAs('items', $filenameString, 'public');
+        }
+
+        $validated['picture'] = $filenameString;
+
+        $inventory = Inventory::create($validated);
+
+        InventoryLog::create([
+            'name'         => $inventory->name,
+            'categories'   => $inventory->categories,
+            'action'       => 'create',
+            'description'  => "Item created with quantity {$inventory->quantity} and price {$inventory->price}",
+            'quantity'     => $inventory->quantity,
+            'price'        => $inventory->price,
+            'picture'      => $inventory->picture, 
+            'inventory_id' => $inventory->id,
+            'changed_by'   => $request->user()->id, 
+        ]);
+
+        return response()->json($inventory, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Inventory $inventory)
     {
-        //
+        return response()->json($inventory);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $inventory = Inventory::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'categories'  => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'quantity'    => 'required|integer|min:0',
+            'price'       => 'required|numeric|min:0',
+            'picture'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ]);
+
+        if ($request->hasFile('picture')) {
+            $file = $request->file('picture');
+            $filenameString = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('items', $filenameString, 'public');
+            
+            $validated['picture'] = $filenameString;
+        } else {
+            unset($validated['picture']);
+        }
+
+
+        $inventory->update($validated);
+
+
+        InventoryLog::create([
+            'name' => $inventory->name,
+            'categories' => $inventory->categories,
+            'action' => 'update',
+            'description' => !empty($changes) ? implode(', ', $changes) : 'No changes detected',
+            'quantity' => $inventory->quantity,
+            'price' => $inventory->price,
+            'picture' => $inventory->picture,
+            'inventory_id' => $inventory->id,
+            'changed_by' => $request->user()->id,
+        ]);
+
+        return response()->json($inventory, 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Request $request, Inventory $inventory)
     {
-        //
+        InventoryLog::create([
+            'name' => $inventory->name,
+            'categories' => $inventory->categories,
+            'action' => 'delete',
+            'description' => 'Item deleted',
+            'quantity' => $inventory->quantity,
+            'price' => $inventory->price,
+            'picture' => $inventory->picture,
+            'inventory_id' => $inventory->id,
+            'changed_by' => $request->user()->id,
+        ]);
+
+        $inventory->delete();
+
+        return response()->json(['message' => 'Inventory item deleted']);
     }
 }

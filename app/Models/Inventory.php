@@ -18,16 +18,9 @@ class Inventory extends Model
         'picture',
     ];
 
-    /**
-     * Relationships
-     */
     public function logs()
     {
         return $this->hasMany(Log::class);
     }
 
-    public function reports()
-    {
-        return $this->hasMany(Report::class);
-    }
 }

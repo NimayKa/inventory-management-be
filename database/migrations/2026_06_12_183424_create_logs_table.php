@@ -6,15 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('logs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('categories', ['stock_in', 'stock_out', 'adjustment']); // adjust as needed
+            $table->string('categories');
             $table->text('description')->nullable();
             $table->integer('quantity');
             $table->decimal('price', 10, 2)->nullable();
@@ -25,9 +22,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('logs');

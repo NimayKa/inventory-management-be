@@ -12,6 +12,7 @@ class Log extends Model
     protected $fillable = [
         'name',
         'categories',
+        'action',
         'description',
         'quantity',
         'price',

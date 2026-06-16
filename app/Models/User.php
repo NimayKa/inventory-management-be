@@ -51,16 +51,9 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relationships
-     */
     public function logs()
     {
         return $this->hasMany(Log::class, 'changed_by');
     }
 
-    public function reports()
-    {
-        return $this->hasMany(Report::class, 'submit_by');
-    }
 }

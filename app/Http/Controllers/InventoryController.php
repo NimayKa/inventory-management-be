@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Inventory;
 use App\Models\Log as InventoryLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
@@ -133,5 +135,24 @@ public function index(Request $request)
         $inventory->delete();
 
         return response()->json(['message' => 'Inventory item deleted']);
+    }
+
+    public function dashboardStats()
+    {
+        $categoryData = DB::table('inventories')
+        ->join('logs', 'inventories.id', '=', 'logs.inventory_id') 
+        ->select('logs.categories as category', DB::raw('count(inventories.id) as total'))
+        ->whereNotNull('logs.categories')
+        ->groupBy('logs.categories')
+        ->get();
+
+    $staffCount = User::count();
+    $logCount = InventoryLog::count();
+
+    return response()->json([
+        'categories'  => $categoryData,
+        'staff_count' => $staffCount,
+        'log_count'   => $logCount
+    ], 200);
     }
 }

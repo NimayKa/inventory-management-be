@@ -16,6 +16,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    Route::get('/dashboard-stats', [InventoryController::class, 'dashboardStats']);
+
     Route::apiResource('inventories', InventoryController::class);
 
     Route::apiResource('logs', LogController::class)->only(['index', 'show']);

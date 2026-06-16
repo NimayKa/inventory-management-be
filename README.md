@@ -32,7 +32,7 @@ A REST API built with **Laravel** and **Laravel Sanctum** for authentication, se
 ### 1. Clone the repository
 
 ```bash
-git clone <(https://github.com/NimayKa/inventory-management-be)> inventory-backend
+git clone https://github.com/NimayKa/inventory-management-be inventory-backend
 cd inventory-backend
 ```
 
